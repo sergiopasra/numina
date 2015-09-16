@@ -17,10 +17,10 @@ numpy_include = numpy.get_include()
 # try to handle gracefully Cython
 try:
     from Cython.Distutils import build_ext
-    ext3 = Extension('numina.array._nirproc', 
-                 ['src/nirproc.pyx'],
-                include_dirs=[numpy_include],
-                language='c++')
+    ext3 = Extension('numina.array._nirproc',
+                     ['src/nirproc.pyx'],
+                     include_dirs=[numpy_include],
+                     language='c++')
     ext4 = Extension('numina.array.trace._traces',
                      ['numina/array/trace/traces.pyx',
                       'numina/array/trace/Trace.cpp'],
@@ -34,11 +34,12 @@ try:
                      ['numina/array/peaks/kernels.pyx'],
                      language='c')
     cmdclass = {'build_ext': build_ext}
+
 except ImportError:
     print('We do not have Cython, just using the generated files')
-    ext3 = Extension('numina.array._nirproc', 
-                 ['src/nirproc.cpp'],
-                include_dirs=[numpy_include])
+    ext3 = Extension('numina.array._nirproc',
+                     ['src/nirproc.cpp'],
+                     include_dirs=[numpy_include])
     ext4 = Extension('numina.array.trace._traces',
                      ['numina/array/trace/traces.cpp',
                       'numina/array/trace/Trace.cpp'],
