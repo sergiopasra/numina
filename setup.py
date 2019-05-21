@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 from setuptools import setup, Extension
+from setuptools import find_packages
 
 import sys
 
@@ -108,6 +109,18 @@ def setup_package():
             'pytest<3.7; python_version<"3"',
             'pytest>=6; python_version>="3"',
             'pytest-remotedata'
+        tests_require=['pytest', 'pytest-remotedata'],
+        install_requires=[
+            'setuptools>=36.2.1',
+            'six>=1.7',
+            'numpy',
+            'astropy>=2',
+            'scipy>=0.19', 'PyYaml',
+            'matplotlib',
+            'enum34;python_version<"3.4"',
+            'contextlib2;python_version<"3.5"',
+            'python-dateutil', 'lmfit', 'scikit-image',
+            'sqlalchemy',
         ],
         extras_require={
           'test': [
@@ -117,6 +130,25 @@ def setup_package():
             ]
         },
         zip_safe=False,
+        classifiers=[
+            "Programming Language :: C",
+            "Programming Language :: C++",
+            "Programming Language :: Cython",
+            "Programming Language :: Python :: 2.7",
+            "Programming Language :: Python :: 3.5",
+            "Programming Language :: Python :: 3.6",
+            "Programming Language :: Python :: 3.7",
+            "Programming Language :: Python :: 3.8",
+            "Programming Language :: Python :: Implementation :: CPython",
+            'Development Status :: 3 - Alpha',
+            "Environment :: Console",
+            "Intended Audience :: Science/Research",
+            "License :: OSI Approved :: GNU General Public License (GPL)",
+            "Operating System :: OS Independent",
+            "Topic :: Scientific/Engineering :: Astronomy",
+            "Topic :: Software Development :: Libraries :: Application Frameworks",
+            ],
+        long_description=open('README.rst').read()
         )
 
     # For actions like "egg_info" and "--version", numpy is not required
