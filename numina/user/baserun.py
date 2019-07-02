@@ -95,6 +95,7 @@ def config_recipe_logger(root_level_logger, ref_logger='numina'):
 def run_task_reduce(task, datastore):
 
     obsid = task.request_params['oblock_id']
+    task.obsid = obsid
     configuration = task.request_params["instrument_configuration"]
     as_mode = task.request_params["mode"]
 
