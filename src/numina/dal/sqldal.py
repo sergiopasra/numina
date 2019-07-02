@@ -31,9 +31,10 @@ from numina.exceptions import NoResultFound
 from numina.dal.stored import StoredProduct, StoredParameter
 from numina.dal.utils import tags_are_valid
 from numina.core import DataFrameType
+from numina.instrument.assembly import assembly_instrument
 
 from .db.model import ObservingBlock, DataProduct, RecipeParameters, ObservingBlockAlias
-from .db.model import DataProcessingTask, ReductionResult
+from .db.model import DataProcessingTask, ReductionResult, Frame, ReductionResultValue
 
 
 _logger = logging.getLogger(__name__)
@@ -55,16 +56,342 @@ def search_oblock_from_id(session, obsref):
         raise NoResultFound("oblock with id %d not found" % obsid)
 
 
+DB_FRAME_KEYS = [
+    'instrument',
+    'object',
+    'observation_date',
+    'uuid',
+    'type',
+    'mode',
+    'exptime',
+    'darktime',
+    'insconf',
+    'blckuuid',
+    'quality_control',
+    'vph',
+    'insmode'
+]
+
+
+def metadata_fits(obj, drps):
+
+    # First. get instrument
+    objl = DataFrameType().convert(obj)
+
+    with objl.open() as hdulist:
+        # get instrument
+        instrument_id = hdulist[0].header['INSTRUME']
+
+    this_drp = drps.query_by_name(instrument_id)
+
+    datamodel = this_drp.datamodel
+    result = DataFrameType(datamodel=datamodel).extract_db_info(obj, DB_FRAME_KEYS)
+    return result
+
+def gg():
+    class ProcessingTask(object):
+        def __init__(self):
+            self.result = None
+            self.id = 1
+
+            self.time_create = datetime.datetime.utcnow()
+            self.time_start = 0
+            self.time_end = 0
+            self.request = "reduce"
+            self.request_params = {}
+            self.request_runinfo = self._init_runinfo()
+            self.state = 0
+            self.obsid = None
+
+
+        @classmethod
+        def _init_runinfo(cls):
+            request_runinfo = dict(runner='unknown', runner_version='unknown')
+            return request_runinfo
+    return 0
+
+def generate_reduction_tasks(session, obid, request_params):
+    """Generate reduction tasks."""
+
+    obsres = search_oblock_from_id(session, obid)
+
+    request = {"id": obid}
+    request.update(request_params)
+
+    # Generate Main Reduction Task
+    print('generate main task')
+    dbtask = DataProcessingTask()
+    dbtask.host = 'localhost'
+    dbtask.label = 'root'
+    dbtask.awaited = False
+    dbtask.waiting = True
+    dbtask.method = 'reduction'
+    dbtask.request = request
+    dbtask.ob = obsres
+    print('generate done')
+    session.add(dbtask)
+    # Generate reductionOB
+    #
+    # print('generate recursive')
+    # recursive_tasks(dbtask, obsres, request_params)
+
+    session.commit()
+    return dbtask
+
 class SqliteDAL(AbsDrpDAL):
-    def __init__(self, dialect, session, basedir, datadir):
+    def __init__(self, dialect, session, basedir, datadir, components=None):
+        import numina.instrument.assembly as asbl
+
         drps = numina.drps.get_system_drps()
+        com_store = asbl.load_panoply_store(drps)
+
         super(SqliteDAL, self).__init__(drps)
+
+        self._RESERVED_MODE_NAMES = ['nulo', 'container', 'root', 'raiz']
 
         self.dialect = dialect
         self.session = session
         self.basedir = basedir
         self.datadir = datadir
+        self.components = components if components else com_store
         self.extra_data = {}
+
+    def dump_data(self):
+        pass
+
+    def new_task(self, request, request_params):
+        # obsres = search_oblock_from_id(session, obid)
+
+        # request = {"id": obid}
+        # request.update(request_params)
+
+        # Generate Main Reduction Task
+        print('generate main task')
+        dbtask = DataProcessingTask()
+        dbtask.host = 'localhost'
+        dbtask.label = 'root'
+        dbtask.awaited = False
+        dbtask.waiting = True
+        dbtask.request = request
+        dbtask.request_params = request_params
+        dbtask.request_runinfo = dbtask._init_runinfo()
+        # dbtask.ob = obsres
+        print('generate done')
+        self.session.add(dbtask)
+        # Generate reductionOB
+        #
+        # print('generate recursive')
+        # recursive_tasks(dbtask, obsres, request_params)
+
+        self.session.commit()
+        return dbtask
+
+    def update_task(self, task):
+        _logger.debug('update task=%d in backend', task.id)
+        self.session.commit()
+
+    def update_result_old(self, task, serialized, filename):
+
+        result = task.result
+        if result is None:
+            return
+
+        res_dir = task.request_runinfo['results_dir']
+        result_reg = {
+            'id': newix,
+            'task_id': task.id,
+            'uuid': str(task.result.uuid),
+            'qc': task.result.qc.name,
+            'mode': task.request_runinfo['mode'],
+            'instrument': task.request_runinfo['instrument'],
+            'pipeline': task.request_runinfo['pipeline'],
+            'time_create': task.time_end.strftime('%FT%T'),
+            'time_obs': '',
+            'recipe_class': task.request_runinfo['recipe_class'],
+            'recipe_fqn': task.request_runinfo['recipe_fqn'],
+            'oblock_id': task.request_params['oblock_id'],
+            'result_dir': res_dir,
+            'result_file': filename
+        }
+        self.db_tables['results'][newix] = result_reg
+
+        for key, prod in result.stored().items():
+
+            DB_PRODUCT_KEYS = [
+                'instrument',
+                'observation_date',
+                'uuid',
+                'quality_control'
+            ]
+
+            if prod.type.isproduct():
+                newprod = self.new_product_id()
+                _logger.debug('product_id=%d in backend', newprod)
+                internal_value = getattr(result, key)
+                ometa = prod.type.extract_db_info(internal_value, DB_PRODUCT_KEYS)
+                prod_reg = {
+                    'id': newprod,
+                    'result_id': newix,
+                    'qc': task.result.qc.name,
+                    'instrument': task.request_runinfo['instrument'],
+                    'time_create': task.time_end.strftime('%FT%T'),
+                    'time_obs': ometa['observation_date'].strftime('%FT%T'),
+                    'tags': ometa['tags'],
+                    'uuid': ometa['uuid'],
+                    'oblock_id': task.request_params['oblock_id'],
+                    'type': prod.type.name(),
+                    'type_fqn': fully_qualified_name(prod.type),
+                    'content': os.path.join(res_dir, serialized['values'][key])
+                }
+                self.db_tables['products'][newprod] = prod_reg
+
+    def update_result(self, task, serialized, filename):
+        _logger.debug('update result in backend')
+        saveres = serialized
+        session = self.session
+        result = task.result
+        result_db = ReductionResult()
+
+        result_db.pipeline = task.runinfo['pipeline']
+        result_db.obsmode = task.observation['mode']
+        result_db.recipe = task.runinfo['recipe_full_name']
+
+        result_db.task_id = task.runinfo['taskid']
+        result_db.ob_id = task.observation['observing_result']
+        # dateobs = Column(DateTime)
+        if hasattr(result, 'qc'):
+            result_db.qc = result.qc
+
+        session.add(result_db)
+        for key, prod in result.stored().items():
+            if prod.dest != 'qc':
+
+                val = ReductionResultValue()
+                fullpath = os.path.join(task.runinfo['results_dir'], saveres[prod.dest])
+                relpath = os.path.relpath(fullpath, task.runinfo['base_dir'])
+                val.name = prod.dest
+                val.datatype = prod.type.name()
+                val.contents = relpath
+                result_db.values.append(val)
+
+                if prod.type.isproduct():
+                    product = DataProduct(datatype=prod.type.name(),
+                                          task_id=task.runinfo['taskid'],
+                                          instrument_id=task.observation['instrument'],
+                                          contents=relpath
+                                          )
+                    product.result_value = val
+                    internal_value = getattr(result, key)
+                    meta_info = prod.type.extract_db_info(internal_value, DB_PRODUCT_KEYS)
+                    product.dateobs = meta_info['observation_date']
+                    product.uuid = meta_info['uuid']
+                    product.qc = meta_info['quality_control']
+                    master_tags = meta_info['tags']
+                    for k, v in master_tags.items():
+                        product[k] = v
+
+                    session.add(product)
+
+        session.commit()
+
+    def add_obs(self, obtable):
+        from numina.core.oresult import ObservationResult
+        import uuid
+        import datetime
+
+        loaded_data = obtable
+        obs_blocks = {}
+        # complete the blocks...
+        for el in loaded_data:
+            obs_blocks[el['id']] = el
+
+        # FIXME: id could be UUID
+        obs_blocks1 = {}
+        for ob_id, block in obs_blocks.items():
+            ob = ObservationResult(
+                instrument=block['instrument'],
+                mode=block['mode']
+            )
+            ob.id = ob_id
+            ob.uuid = str(uuid.uuid4())
+            ob.configuration = 'default'
+            ob.children = block.get('children', [])
+            ob.frames = block.get('frames', [])
+            obs_blocks1[ob_id] = ob
+            # ignore frames for the moment
+
+        obs_blocks2 = {}
+        for key, obs in obs_blocks1.items():
+            now = datetime.datetime.now()
+            ob = ObservingBlock(instrument_id=obs.instrument, mode=obs.mode, start_time=now)
+            ob.id = obs.uuid
+            obs_blocks2[obs.id] = ob
+            # FIXME: add alias, only if needed
+            alias = ObservingBlockAlias(uuid=obs.uuid, alias=obs.id)
+
+            # add frames
+            # extract metadata from frames
+            # FIXME:
+            ingestdir = 'data'
+            meta_frames = []
+            for fname in obs.frames:
+                full_fname = os.path.join(ingestdir, fname)
+                print(fname, full_fname)
+                result = metadata_fits(full_fname, self.drps)
+                # numtype = result['type']
+                # blck_uuid = obs.uuid # result.get('blckuuid', obs.uuid)
+                result['path'] = fname
+                meta_frames.append(result)
+
+            for meta in meta_frames:
+                # Insert into DB
+                newframe = Frame()
+                newframe.name = meta['path']
+                newframe.uuid = meta['uuid']
+                newframe.start_time = meta['observation_date']
+                # No way of knowing when the readout ends...
+                newframe.completion_time = newframe.start_time + datetime.timedelta(seconds=meta['darktime'])
+                newframe.exposure_time = meta['exptime']
+                newframe.object = meta['object']
+                ob.frames.append(newframe)
+
+            # set start/completion time from frames
+            if ob.frames:
+                ob.object = meta_frames[0]['object']
+                ob.start_time = ob.frames[0].start_time
+                ob.completion_time = ob.frames[-1].completion_time
+
+            # Facts
+            # add_ob_facts(session, ob, ingestdir)
+
+            # raw frames insertion
+            # for frame in frames:
+            # call_event('on_ingest_raw_fits', session, frame, frames[frame])
+
+            self.session.add(ob)
+            self.session.add(alias)
+
+        # processes children
+        for key, obs in obs_blocks1.items():
+            if obs.children:
+                # get parent
+                parent = obs_blocks2[key]
+                for cid in obs.children:
+                    # get children
+                    child = obs_blocks2[cid]
+                    parent.children.append(child)
+
+        print('stage4')
+        for key, obs in obs_blocks2.items():
+            if obs.object is None:
+                o1, s1, c1 = complete_recursive_first(obs)
+                o2, s2, c2 = complete_recursive_last(obs)
+                obs.object = o1
+                obs.start_time = s1
+                obs.completion_time = c2
+
+        self.session.commit()
+
 
     def search_oblock_from_id(self, obsref):
 
@@ -152,31 +479,60 @@ class SqliteDAL(AbsDrpDAL):
         else:
             raise NoResultFound("No parameters for %s mode, pipeline %s", mode, pipeline)
 
-    def obsres_from_oblock_id(self, obsid, override_mode=None):
+    def assembly_instrument(self, keyval, date, by_key='name'):
+        return assembly_instrument(self.components, keyval, date, by_key=by_key)
+
+    def obsres_from_oblock(self, oblock, as_mode=None):
+        # From dictdal
+
+        from numina.core.oresult import ObservationResult
+
+        # Internal copy
+        obsres = oblock
+        obsres.configuration = 'default'
+        obsres.mode = as_mode or obsres.mode
+        _logger.debug("obsres_from_oblock_2 id='%s', mode='%s' START", obsres.id, obsres.mode)
+
+        try:
+            this_drp = self.drps.query_by_name(obsres.instrument)
+        except KeyError:
+            raise ValueError('no DRP for instrument {}'.format(obsres.instrument))
+
+        # Reserved names
+        if obsres.mode in self._RESERVED_MODE_NAMES:
+            selected_mode = None # null mode
+        else:
+            selected_mode = this_drp.modes[obsres.mode]
+
+        if selected_mode:
+            # This is used if we pass a option here or
+            # if mode.build_ob_options is defined in the mode class
+            # seems useless
+            obsres = selected_mode.build_ob(obsres, self)
+            # Not needed, all the information is obtained from
+            # the requirements
+            obsres = selected_mode.tag_ob(obsres)
+
+        _logger.debug('assembly instrument model')
+        key, date_obs, keyname = this_drp.select_profile(obsres)
+        obsres.configuration = self.assembly_instrument(key, date_obs, keyname)
+        obsres.profile = obsres.configuration
+
+        auto_configure = True
+        sample_frame = obsres.get_sample_frame()
+        if auto_configure and sample_frame is not None:
+            _logger.debug('configuring instrument model with image')
+            obsres.profile.configure_with_image(sample_frame.open())
+        else:
+            _logger.debug('no configuring instrument model')
+        return obsres
+
+    def obsres_from_oblock_id(self, obsid, as_mode=None, configuration=None):
         # Search
         _logger.debug('query obsres_from_oblock_id with obsid=%s', obsid)
-        obsres = self.search_oblock_from_id(obsid)
-
-        if override_mode:
-            obsres.mode = override_mode
-        if obsres.instrument is None:
-            raise ValueError('Undefined Instrument')
-
-        this_drp = self.drps.query_by_name(obsres.instrument)
-
-        mode = this_drp.modes[obsres.mode]
-        tagger = mode.tagger
-
-        if tagger is None:
-            master_tags = {}
-        else:
-            master_tags = tagger(obsres)
-
-        obsres.tags = master_tags
-        obsres.configuration = this_drp.configuration_selector(obsres)
-        obsres.pipeline = 'default'
-
-        return obsres
+        oblock = self.search_oblock_from_id(obsid)
+        print(oblock.instrument)
+        return self.obsres_from_oblock(oblock, as_mode)
 
     def search_parameter(self, name, tipo, obsres, options=None):
         # returns StoredProduct

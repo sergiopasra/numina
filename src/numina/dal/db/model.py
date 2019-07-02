@@ -22,7 +22,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 import numina.types.dataframe
 import numina.types.qc as qc
 
-from numinadb.base import Base
+from .base import Base
 from .jsonsqlite import MagicJSON
 from .polydict import PolymorphicVerticalProperty
 from .proxydict import ProxiedDictMixin
@@ -55,7 +55,7 @@ class ObservingBlock(Base):
     )
     images = synonym("frames")
     # Compatibility
-    requirements = []
+    requirements = {}
     results = []
 
     def metadata_with(self, datamodel):
@@ -69,6 +69,16 @@ class ObservingBlock(Base):
         origin['observation_date'] = first['observation_date']
         origin['frames'] = [img['imgid'] for img in imginfo]
         return origin
+
+    def get_sample_frame(self):
+        """Return first available frame in observation result"""
+        for frame in self.frames:
+            return frame
+
+        for res in self.results.values():
+            return res
+
+        return None
 
 
 class ObservingBlockAlias(Base):
@@ -155,25 +165,35 @@ class DataProcessingTask(Base):
     id = Column(Integer, primary_key=True)
     host = Column(String(45))
     state = Column(Integer, default=0)
-    create_time = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
-    start_time = Column(DateTime)
-    completion_time = Column(DateTime)
+    time_create = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    time_start = Column(DateTime)
+    time_end = Column(DateTime)
 
     # obsresult_node_id = Column(Integer, ForeignKey('observation_result.id'), nullable=False)
-    ob_id = Column(String, ForeignKey("obs.id"), nullable=False)
+    obsid = Column(String, ForeignKey("obs.id"))#, nullable=False)
 
     parent_id = Column(Integer, ForeignKey('dp_task.id'))
     label = Column(String(255))
     waiting = Column(Boolean)
     awaited = Column(Boolean)
-    method = Column(UnicodeText)
-    request = Column(MagicJSON)
-    result = Column(MagicJSON)
+    request = Column(UnicodeText)
+    request_params = Column(MagicJSON)
+    request_runinfo = Column(MagicJSON)
+    # result = Column(MagicJSON)
 
     # obsresult_node = relationship("ObservationResult", backref='tasks')
     ob = relationship("ObservingBlock", backref='tasks')
 
     children = relationship("DataProcessingTask", backref=backref('parent', remote_side=[id]))
+
+    @classmethod
+    def _init_runinfo(cls):
+        request_runinfo = dict(runner='unknown', runner_version='unknown')
+        return request_runinfo
+
+    def as_dict(self):
+        res = self.__dict__.copy()
+        return {a:b for a,b in res.items() if not a.startswith('_')}
 
 
 class ReductionResult(Base):
@@ -181,10 +201,16 @@ class ReductionResult(Base):
     id = Column(Integer, primary_key=True)
     instrument_id = Column(String(10), ForeignKey("instruments.name"), nullable=False)
 
-    pipeline = Column(String(20))
-    obsmode = Column(String(40))
-    recipe = Column(String(100))
+    uuid = 1
 
+    pipeline = Column(String(20))
+    mode = Column(String(40))
+    time_create = "This comes from task"
+    time_obs = "This comes from OB"
+    recipe_class = Column(String(100))
+    recipe_fqn = Column(String(100))
+    result_dir = Column(String(100))
+    result_file = Column(String(100))
     task_id = Column(Integer, ForeignKey('dp_task.id'), unique=True, nullable=False)
     ob_id = Column(String, ForeignKey("obs.id"), nullable=False)
     qc = Column(Enum(qc.QC), default=qc.QC.UNKNOWN)

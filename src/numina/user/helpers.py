@@ -97,7 +97,7 @@ class DataManager:
 
         with working_directory(result_dir):
 
-            task_repr = task.__dict__.copy()
+            task_repr = task.as_dict()
 
             # save to disk the RecipeResult part and return the file to save it
             if task.result is not None:
@@ -160,11 +160,17 @@ class ProcessingTask:
         self.request_params = {}
         self.request_runinfo = self._init_runinfo()
         self.state = 0
+        # For a tree of tasks
+        self.parent = None
+        self.children = []
 
     @classmethod
     def _init_runinfo(cls):
         request_runinfo = dict(runner='unknown', runner_version='unknown')
         return request_runinfo
+
+    def as_dict(self):
+        return self.__dict__.copy()
 
 
 class WorkEnvironment:
