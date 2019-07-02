@@ -160,17 +160,17 @@ class Backend(BaseHybridDAL):
         res_dir = task.request_runinfo['results_dir']
         result_reg = {
             'id': newix,
-            'task_id': task.id,
-            'uuid': str(task.result.uuid),
-            'qc': task.result.qc.name,
-            'mode': task.request_runinfo['mode'],
-            'instrument': task.request_runinfo['instrument'],
-            'pipeline': task.request_runinfo['pipeline'],
-            'time_create': task.time_end.strftime('%FT%T'),
-            'time_obs': '',
-            'recipe_class': task.request_runinfo['recipe_class'],
-            'recipe_fqn': task.request_runinfo['recipe_fqn'],
-            'oblock_id': task.request_params['oblock_id'],
+            'task_id': task.id, #
+            'uuid': str(task.result.uuid),#
+            'qc': task.result.qc.name,#
+            'mode': task.request_runinfo['mode'],#
+            'instrument': task.request_runinfo['instrument'],#
+            'pipeline': task.request_runinfo['pipeline'],#
+            'time_create': task.time_end.strftime('%FT%T'),#?
+            'time_obs': '',#?
+            'recipe_class': task.request_runinfo['recipe_class'],#?
+            'recipe_fqn': task.request_runinfo['recipe_fqn'],#?
+            'oblock_id': task.request_params['oblock_id'],#?
             'result_dir': res_dir,
             'result_file': filename
         }
