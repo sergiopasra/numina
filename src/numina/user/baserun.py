@@ -58,6 +58,8 @@ def run_reduce(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
     request_params['logger_control'] = logger_control
 
     task = datastore.backend.new_task(request, request_params)
+    task.request_runinfo['runner'] = 'numina'
+    task.request_runinfo['runner_version'] = numina.__version__
 
     # We should control here any possible failure
     try:

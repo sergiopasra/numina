@@ -19,6 +19,8 @@ from sqlalchemy import Enum
 from sqlalchemy.orm import relationship, backref, synonym
 from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.mutable import MutableDict
+
 import numina.types.dataframe
 import numina.types.qc as qc
 
@@ -177,8 +179,9 @@ class DataProcessingTask(Base):
     waiting = Column(Boolean)
     awaited = Column(Boolean)
     request = Column(UnicodeText)
-    request_params = Column(JSON, default="{}")
-    request_runinfo = Column(JSON)
+
+    request_params = Column(MutableDict.as_mutable(JSON))
+    request_runinfo = Column(MutableDict.as_mutable(JSON))
 
     # obsresult_node = relationship("ObservationResult", backref='tasks')
     ob = relationship("ObservingBlock", backref='tasks')
