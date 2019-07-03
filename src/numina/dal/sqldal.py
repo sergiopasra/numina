@@ -251,16 +251,19 @@ class SqliteDAL(AbsDrpDAL):
         session = self.session
         result = task.result
         result_db = ReductionResult()
-
-        result_db.pipeline = task.runinfo['pipeline']
-        result_db.obsmode = task.observation['mode']
-        result_db.recipe = task.runinfo['recipe_full_name']
-
-        result_db.task_id = task.runinfo['taskid']
-        result_db.ob_id = task.observation['observing_result']
-        # dateobs = Column(DateTime)
-        if hasattr(result, 'qc'):
-            result_db.qc = result.qc
+        result_db.task_id = task.id
+        result_db.uuid = str(task.result.uuid)
+        result_db.qc = task.result.qc.name
+        result_db.mode = task.request_runinfo['mode']
+        result_db.pipeline = task.request_runinfo['pipeline']
+        result_db.instrument_id = task.request_runinfo['instrument']
+        result_db.time_create = task.time_end
+        result_db.time_obs = None
+        result_db.recipe_class = task.request_runinfo['recipe_class']
+        result_db.recipe_fqn =  task.request_runinfo['recipe_fqn']
+        result_db.ob_id = task.request_params['oblock_id']
+        result_db.result_dir =  res_dir
+        result_db.result_file = filename
 
         session.add(result_db)
         for key, prod in result.stored().items():
