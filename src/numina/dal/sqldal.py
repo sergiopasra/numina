@@ -188,6 +188,18 @@ class SqliteDAL(AbsDrpDAL):
 
     def update_task(self, task):
         _logger.debug('update task=%d in backend', task.id)
+        # FIXME: ugly workaround
+        # to make the session notice the change, we have to
+        # reassign, mutable dictionary
+        # check mutabledict
+        newdict_r = task.request_runinfo.copy()
+        newdict_p = task.request_params.copy()
+        newdict = {}
+        task.request_runinfo = newdict
+        task.request_params = newdict
+        self.session.commit()
+        task.request_runinfo = newdict_r
+        task.request_params = newdict_p
         self.session.commit()
 
     def update_result_old(self, task, serialized, filename):
@@ -250,6 +262,12 @@ class SqliteDAL(AbsDrpDAL):
         saveres = serialized
         session = self.session
         result = task.result
+
+        if result is None:
+            return
+
+        res_dir = task.request_runinfo['results_dir']
+
         result_db = ReductionResult()
         result_db.task_id = task.id
         result_db.uuid = str(task.result.uuid)
@@ -266,6 +284,10 @@ class SqliteDAL(AbsDrpDAL):
         result_db.result_file = filename
 
         session.add(result_db)
+        if True:
+            session.commit()
+            return
+
         for key, prod in result.stored().items():
             if prod.dest != 'qc':
 
