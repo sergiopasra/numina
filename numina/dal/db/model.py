@@ -13,7 +13,7 @@ import datetime
 
 import six
 from sqlalchemy import Integer, String, DateTime, Float, Boolean, TIMESTAMP, Unicode, UnicodeText
-from sqlalchemy import CHAR
+from sqlalchemy import CHAR, JSON
 from sqlalchemy import Table, Column, ForeignKey, UniqueConstraint
 from sqlalchemy import Enum
 from sqlalchemy.orm import relationship, backref, synonym
@@ -177,9 +177,8 @@ class DataProcessingTask(Base):
     waiting = Column(Boolean)
     awaited = Column(Boolean)
     request = Column(UnicodeText)
-    request_params = Column(MagicJSON)
-    request_runinfo = Column(MagicJSON)
-    # result = Column(MagicJSON)
+    request_params = Column(JSON, default="{}")
+    request_runinfo = Column(JSON)
 
     # obsresult_node = relationship("ObservationResult", backref='tasks')
     ob = relationship("ObservingBlock", backref='tasks')
@@ -200,13 +199,11 @@ class ReductionResult(Base):
     __tablename__ = 'reduction_results'
     id = Column(Integer, primary_key=True)
     instrument_id = Column(String(10), ForeignKey("instruments.name"), nullable=False)
-
-    uuid = 1
-
+    uuid = Column(CHAR(32))
     pipeline = Column(String(20))
     mode = Column(String(40))
-    time_create = "This comes from task"
-    time_obs = "This comes from OB"
+    time_create = Column(DateTime) # "This comes from task"
+    time_obs = Column(DateTime, nullable=True)  # "This comes from OB"
     recipe_class = Column(String(100))
     recipe_fqn = Column(String(100))
     result_dir = Column(String(100))
