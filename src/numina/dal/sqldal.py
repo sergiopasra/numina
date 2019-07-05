@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -32,6 +32,7 @@ from numina.dal.stored import StoredProduct, StoredParameter
 from numina.dal.utils import tags_are_valid
 from numina.core import DataFrameType
 from numina.instrument.assembly import assembly_instrument
+from numina.util.fqn import fully_qualified_name
 
 from .db.model import ObservingBlock, DataProduct, RecipeParameters, ObservingBlockAlias
 from .db.model import DataProcessingTask, ReductionResult, Frame, ReductionResultValue
@@ -192,76 +193,28 @@ class SqliteDAL(AbsDrpDAL):
         # to make the session notice the change, we have to
         # reassign, mutable dictionary
         # check mutabledict
-        newdict_r = task.request_runinfo.copy()
-        newdict_p = task.request_params.copy()
-        newdict = {}
-        task.request_runinfo = newdict
-        task.request_params = newdict
+        # newdict_r = task.request_runinfo.copy()
+        # newdict_p = task.request_params.copy()
+        # newdict = {}
+        # task.request_runinfo = newdict
+        # task.request_params = newdict
+        # self.session.commit()
+        # task.request_runinfo = newdict_r
+        # task.request_params = newdict_p
         self.session.commit()
-        task.request_runinfo = newdict_r
-        task.request_params = newdict_p
-        self.session.commit()
-
-    def update_result_old(self, task, serialized, filename):
-
-        result = task.result
-        if result is None:
-            return
-
-        res_dir = task.request_runinfo['results_dir']
-        result_reg = {
-            'id': newix,
-            'task_id': task.id,
-            'uuid': str(task.result.uuid),
-            'qc': task.result.qc.name,
-            'mode': task.request_runinfo['mode'],
-            'instrument': task.request_runinfo['instrument'],
-            'pipeline': task.request_runinfo['pipeline'],
-            'time_create': task.time_end.strftime('%FT%T'),
-            'time_obs': '',
-            'recipe_class': task.request_runinfo['recipe_class'],
-            'recipe_fqn': task.request_runinfo['recipe_fqn'],
-            'oblock_id': task.request_params['oblock_id'],
-            'result_dir': res_dir,
-            'result_file': filename
-        }
-        self.db_tables['results'][newix] = result_reg
-
-        for key, prod in result.stored().items():
-
-            DB_PRODUCT_KEYS = [
-                'instrument',
-                'observation_date',
-                'uuid',
-                'quality_control'
-            ]
-
-            if prod.type.isproduct():
-                newprod = self.new_product_id()
-                _logger.debug('product_id=%d in backend', newprod)
-                internal_value = getattr(result, key)
-                ometa = prod.type.extract_db_info(internal_value, DB_PRODUCT_KEYS)
-                prod_reg = {
-                    'id': newprod,
-                    'result_id': newix,
-                    'qc': task.result.qc.name,
-                    'instrument': task.request_runinfo['instrument'],
-                    'time_create': task.time_end.strftime('%FT%T'),
-                    'time_obs': ometa['observation_date'].strftime('%FT%T'),
-                    'tags': ometa['tags'],
-                    'uuid': ometa['uuid'],
-                    'oblock_id': task.request_params['oblock_id'],
-                    'type': prod.type.name(),
-                    'type_fqn': fully_qualified_name(prod.type),
-                    'content': os.path.join(res_dir, serialized['values'][key])
-                }
-                self.db_tables['products'][newprod] = prod_reg
 
     def update_result(self, task, serialized, filename):
         _logger.debug('update result in backend')
-        saveres = serialized
+
         session = self.session
         result = task.result
+
+        DB_PRODUCT_KEYS = [
+            'instrument',
+            'observation_date',
+            'uuid',
+            'quality_control'
+        ]
 
         if result is None:
             return
@@ -284,38 +237,40 @@ class SqliteDAL(AbsDrpDAL):
         result_db.result_file = filename
 
         session.add(result_db)
-        if True:
-            session.commit()
-            return
 
         for key, prod in result.stored().items():
-            if prod.dest != 'qc':
 
-                val = ReductionResultValue()
-                fullpath = os.path.join(task.runinfo['results_dir'], saveres[prod.dest])
-                relpath = os.path.relpath(fullpath, task.runinfo['base_dir'])
-                val.name = prod.dest
-                val.datatype = prod.type.name()
-                val.contents = relpath
-                result_db.values.append(val)
+            val = ReductionResultValue()
 
-                if prod.type.isproduct():
-                    product = DataProduct(datatype=prod.type.name(),
-                                          task_id=task.runinfo['taskid'],
-                                          instrument_id=task.observation['instrument'],
-                                          contents=relpath
-                                          )
-                    product.result_value = val
-                    internal_value = getattr(result, key)
-                    meta_info = prod.type.extract_db_info(internal_value, DB_PRODUCT_KEYS)
-                    product.dateobs = meta_info['observation_date']
-                    product.uuid = meta_info['uuid']
-                    product.qc = meta_info['quality_control']
-                    master_tags = meta_info['tags']
-                    for k, v in master_tags.items():
-                        product[k] = v
+            # fullpath = os.path.join(task.request_runinfo['results_dir'], saveres['values'][prod.dest])
+            # relpath = os.path.relpath(fullpath, task.request_runinfo['base_dir'])
+            # val.name = prod.dest
+            # val.datatype = prod.type.name()
+            # val.contents = relpath
+            result_db.values.append(val)
 
-                    session.add(product)
+            if prod.type.isproduct():
+
+                internal_value = getattr(result, key)
+                ometa = prod.type.extract_db_info(internal_value, DB_PRODUCT_KEYS)
+
+                product = DataProduct()
+                #product.result_id = result_db.id
+                product.qc = task.result.qc.name
+                product.instrument_id = task.request_runinfo['instrument']
+                product.time_create = task.time_end
+                product.time_obs = ometa['observation_date']
+                product.uuid = ometa['uuid']
+                product.oblock_id = task.request_params['oblock_id']
+                product.type = prod.type.name()
+                product.type_fqn = fully_qualified_name(prod.type)
+                product.content =  os.path.join(res_dir, serialized['values'][key])
+
+                master_tags = ometa['tags']
+                for k, v in master_tags.items():
+                    product[k] = v
+
+                session.add(product)
 
         session.commit()
 
@@ -447,7 +402,7 @@ class SqliteDAL(AbsDrpDAL):
         # print('search prod', tipo, ins, tags, pipeline)
         session = self.session
         # FIXME: and instrument == ins
-        res = session.query(DataProduct).filter(DataProduct.datatype == label).order_by(DataProduct.priority.desc())
+        res = session.query(DataProduct).filter(DataProduct.type == label).order_by(DataProduct.priority.desc())
         _logger.debug('requested tags are %s', tags)
         for prod in res:
             pt = {}
@@ -460,10 +415,10 @@ class SqliteDAL(AbsDrpDAL):
 
             if tags_are_valid(pt, tags):
                 _logger.debug('tags are valid, return product, id=%s', prod.id)
-                _logger.debug('content is %s', prod.contents)
+                _logger.debug('content is %s', prod.content)
                 # this is a valid product
                 return StoredProduct(id=prod.id,
-                                     content=load(tipo, os.path.join(self.basedir, prod.contents)),
+                                     content=load(tipo, os.path.join(self.basedir, prod.content)),
                                      tags=pt
                                      )
             _logger.debug('tags are in valid')

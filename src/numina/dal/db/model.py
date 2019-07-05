@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina DB
 #
@@ -58,7 +58,8 @@ class ObservingBlock(Base):
     images = synonym("frames")
     # Compatibility
     requirements = {}
-    results = []
+    results = {}
+    labels = {}
 
     def metadata_with(self, datamodel):
         origin = {}
@@ -235,14 +236,15 @@ class DataProduct(ProxiedDictMixin, Base):
 
     id = Column(Integer, primary_key=True)
     instrument_id = Column(String(10), ForeignKey("instruments.name"), nullable=False)
-    datatype = Column(String(45))
-    task_id = Column(Integer, ForeignKey('dp_task.id'))
+    type = Column(String(45))
+    type_fqn = Column(String(45))
+    time_create = Column(DateTime)
+    time_obs = Column(DateTime, nullable=True)
     result_id = Column(Integer, ForeignKey('reduction_result_values.id'))
     uuid = Column(CHAR(32))
-    dateobs = Column(DateTime)
     qc = Column(Enum(qc.QC), default=qc.QC.UNKNOWN)
     priority = Column(Integer, default=0)
-    contents = Column(String(45))
+    content = Column(String(45))
 
     result_value = relationship("ReductionResultValue")
 
@@ -250,13 +252,6 @@ class DataProduct(ProxiedDictMixin, Base):
 
     crel = lambda key, value: ProductFact(key=key, value=value)
     _proxied = association_proxy("facts", "value", creator=crel)
-
-    def __init__(self, instrument_id, datatype, task_id, contents, priority=0):
-        self.instrument_id = instrument_id
-        self.datatype =  datatype
-        self.task_id = task_id
-        self.contents = contents
-        self.priority = priority
 
     @classmethod
     def with_characteristic(cls, key, value):
