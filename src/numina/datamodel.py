@@ -13,6 +13,7 @@ import numina.util.convert as conv
 
 
 class QueryAttribute(object):
+    """Attribute used for data classification"""
     def __init__(self, name, tipo, description=""):
         self.name = name
         self.type = tipo
@@ -20,6 +21,7 @@ class QueryAttribute(object):
 
 
 class KeyDefinition(object):
+    """Attribute found in FITS images"""
     def __init__(self, key, ext=None, default=None, convert=None):
         self.key = key
         self.ext = 0 if ext is None else ext
