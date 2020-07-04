@@ -103,19 +103,14 @@ def generate_extensions():
 def setup_package():
 
     META_DATA = dict(
-        setup_requires=['numpy'],
+        use_scm_version={'write_to': "numina/version.py",
+        "git_describe_command": "git describe --tags --long `git rev-list --tags --max-count=1`"},
+        setup_requires=['numpy', 'setuptools_scm'],
         tests_require=[
             'pytest<3.7; python_version<"3"',
             'pytest>=6; python_version>="3"',
             'pytest-remotedata'
         ],
-        extras_require={
-          'test': [
-            'pytest<3.7; python_version<"3"',
-            'pytest>=6; python_version>="3"',
-            'pytest-remotedata'
-            ]
-        },
         zip_safe=False,
         )
 
