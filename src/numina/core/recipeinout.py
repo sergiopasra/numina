@@ -138,12 +138,12 @@ class RecipeResultBase(RecipeInOut, metaclass=RecipeResultType):
     """The result of a Recipe."""
 
     def store_to(self, where):
-
         saveres = dict(values={})
         saveres_v = saveres['values']
         for key, prod in self.stored().items():
             val = getattr(self, key)
-            saveres_v[key] = numina.store.dump(prod.type, val, prod.dest)
+            storename = prod.destname
+            saveres_v[key] = numina.store.dump(prod.type, val, storename)
 
         return saveres
 

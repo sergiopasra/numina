@@ -102,14 +102,14 @@ class EntryHolder(object):
 
 class Result(EntryHolder):
     """Result holder for RecipeResult."""
-
     def __init__(self, ptype, description="", validation=True,
-                 destination=None, optional=False, default=None, choices=None):
+                 destination=None, optional=False, default=None, choices=None,
+                 destname=None):
         super(Result, self).__init__(
             ptype, description, destination=destination, optional=optional,
             default=default, choices=choices, validation=validation
-        )
-
+            )
+        self._destname = destname
 #        if not isinstance(self.type, DataProductType):
 #            raise TypeError('type must be of class DataProduct')
 
@@ -119,6 +119,12 @@ class Result(EntryHolder):
     def convert(self, val):
         return self.type.convert_out(val)
 
+    @property
+    def destname(self):
+        if self._destname is not None:
+            return self._destname
+        else:
+            return self.dest
 
 class Product(Result):
     """Product holder for RecipeResult.
@@ -420,7 +426,6 @@ class Parameter(Requirement):
     alias : str, optional
         Alternative name of the field in the RecipeInput object.
     """
-
     def __init__(self, value, description, destination=None, optional=True,
                  choices=None, validation=True, validator=None,
                  accept_scalar=False,
