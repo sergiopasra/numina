@@ -236,6 +236,7 @@ class BaseDictDAL(AbsDrpDAL):
         profile = obsres.profile
         tags = obsres.tags
         pipeline = obsres.pipeline
+
         if name in self.extra_data:
             val = self.extra_data[name]
             content = numina.store.load(tipo, val)
