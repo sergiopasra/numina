@@ -151,11 +151,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin,
 
     @classmethod
     def _datatype_dump(cls, obj, dest):
-
-        # Interpolate
-        # allowed values: tags
-        where = dest.format(tags=obj.tags)
-        filename = where + '.json'
+        filename = dest + '.json'
         writeto(obj, filename)
         return filename
 

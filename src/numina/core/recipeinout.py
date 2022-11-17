@@ -137,13 +137,19 @@ class RecipeInput(RecipeInOut, metaclass=RecipeInputType):
 class RecipeResultBase(RecipeInOut, metaclass=RecipeResultType):
     """The result of a Recipe."""
 
-    def store_to(self, where):
+    def store_to(self, context):
         saveres = dict(values={})
         saveres_v = saveres['values']
-        for key, prod in self.stored().items():
+        for key, res in self.stored().items():
             val = getattr(self, key)
-            storename = prod.destname
-            saveres_v[key] = numina.store.dump(prod.type, val, storename)
+            storename = getattr(res, 'destname', '{dest}')
+            ## Interpolation
+            ## Get additional keys from context
+            tags = getattr(val, 'tags', {})
+            res_uuid = self.uuid
+            ##
+            stf = storename.format(dest=key, uuid=res_uuid, tags=tags)
+            saveres_v[key] = numina.store.dump(res.type, val, stf)
 
         return saveres
 
@@ -163,8 +169,8 @@ class RecipeResult(RecipeResultBase):
 
         super(RecipeResult, self).__init__(*args, **kwds)
 
-    def store_to(self, where):
-        saveres = super(RecipeResult, self).store_to(where)
+    def store_to(self, context):
+        saveres = super(RecipeResult, self).store_to(context)
 
         saveres['qc'] = self.qc.name
         saveres['uuid'] = str(self.uuid)

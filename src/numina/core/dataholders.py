@@ -109,7 +109,10 @@ class Result(EntryHolder):
             ptype, description, destination=destination, optional=optional,
             default=default, choices=choices, validation=validation
             )
-        self._destname = destname
+        if destname is not None:
+            self.destname = destname
+        else:
+            self.destname = getattr(ptype, 'destname', '{dest}')
 #        if not isinstance(self.type, DataProductType):
 #            raise TypeError('type must be of class DataProduct')
 
@@ -119,12 +122,6 @@ class Result(EntryHolder):
     def convert(self, val):
         return self.type.convert_out(val)
 
-    @property
-    def destname(self):
-        if self._destname is not None:
-            return self._destname
-        else:
-            return self.dest
 
 class Product(Result):
     """Product holder for RecipeResult.

@@ -78,12 +78,12 @@ class DataManager:
         import yaml
         yaml.dump(data, fd)
 
-    def store_result_to(self, result):
-        saveres = result.store_to(None)
+    def store_result_to(self, result, context):
+        saveres = result.store_to(context)
         return saveres
 
     def store_task(self, task):
-
+        store_context = {}
         result_dir_rel = task.request_runinfo['results_dir']
         result_dir = os.path.join(self.basedir, result_dir_rel)
 
@@ -111,7 +111,7 @@ class DataManager:
                             _logger.info('with field %s=%s, quality=%s',
                                          key, val, val.quality_control)
 
-                result_repr = self.store_result_to(task.result)
+                result_repr = self.store_result_to(task.result, store_context)
                 # Change result structure by filename
                 task_repr['result'] = result_file
 

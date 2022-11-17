@@ -18,6 +18,8 @@ class DataTypeBase(object):
 
     """
 
+    destname = '{dest}'
+
     def __init__(self, *args, **kwds):
         import numina.core.tagexpr as tagexpr
 
