@@ -250,7 +250,7 @@ def get_imgid(img, prefix=True):
     try:
         return get_imgid_header(hdr, prefix=prefix)
     except ValueError:
-        warnings.warn("no method to identity image", RuntimeWarning)
+        warnings.warn("no method to identify image", RuntimeWarning)
         value = repr(img)
         pre = 'py:{}'
         base = '{}'
