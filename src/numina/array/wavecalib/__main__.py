@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2024 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -91,7 +91,7 @@ def collapsed_spectrum(fitsfile, ns1, ns2,
 
         # fit and subtract background
         if nwin_background > 0:
-            background = ndimage.filters.median_filter(
+            background = ndimage.median_filter(
                 sp, size=nwin_background
             )
             sp -= background
@@ -269,7 +269,7 @@ def find_fxpeaks(sp,
 
     # apply gaussian filtering when requested
     if sigma_gaussian_filtering > 0:
-        spf = ndimage.filters.gaussian_filter(
+        spf = ndimage.gaussian_filter(
             sp,
             sigma=sigma_gaussian_filtering
         )
@@ -717,7 +717,7 @@ def main(args=None):
 
     # apply gaussian filtering
     if args.sigma_gauss_filt > 0:
-        spf = ndimage.filters.gaussian_filter(
+        spf = ndimage.gaussian_filter(
             sp,
             sigma=args.sigma_gauss_filt
         )
