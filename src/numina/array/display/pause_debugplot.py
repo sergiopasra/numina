@@ -9,8 +9,6 @@
 
 import sys
 
-from numina.array.display.matplotlib_qt import plt
-
 DEBUGPLOT_CODES = (0, -1, 1, -2, 2, -10, 10, -11, 11, -12, 12, -21, 21, -22, 22)
 
 
@@ -41,6 +39,7 @@ def pause_debugplot(debugplot, optional_prompt=None, pltshow=False, tight_layout
         also performed.
 
     """
+    from numina.array.display.matplotlib_qt import plt
 
     if debugplot not in DEBUGPLOT_CODES:
         raise ValueError("Invalid debugplot value:", debugplot)

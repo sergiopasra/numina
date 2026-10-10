@@ -8,8 +8,6 @@
 #
 
 import numpy
-from scipy.interpolate import interp1d
-import scipy.ndimage as ndimage
 
 from .blocks import blockgen1d, blockgen  # noqa: F401
 from .imsurfit import FitOne
@@ -182,6 +180,8 @@ def rebin(a, newshape):
 
 def fixpix(data, mask, kind="linear"):
     """Interpolate 2D array data in rows"""
+    from scipy.interpolate import interp1d
+
     if data.shape != mask.shape:
         raise ValueError
 
@@ -200,6 +200,8 @@ def fixpix(data, mask, kind="linear"):
 
 def fixpix2(data, mask, iterations=3, out=None):
     """Substitute pixels in mask by a bilinear least square fitting."""
+    import scipy.ndimage as ndimage
+
     out = out if out is not None else data.copy()
 
     # A binary mask, regions are ones
