@@ -23,6 +23,7 @@ import sys
 import yaml
 
 
+from numina.exceptions import ValidationError
 from numina import __version__
 from .xdgdirs import xdg_config_home
 from .logconf import LOGCONF
@@ -165,7 +166,14 @@ def main(args=None):
     command = getattr(args, "command", None)
 
     if command is not None:
-        args.command(args, extra_args, config)
+        try:
+            args.command(args, extra_args, config)
+        except ValidationError as error:
+            # Invalid inputs are an error of the user, not of the program
+            if args.debug:
+                raise
+            _logger.error("%s", error)
+            return 1
 
 
 def process_unknown_arguments(unknowns):
