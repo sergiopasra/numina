@@ -177,3 +177,50 @@ It is called like this::
 .. option:: name
 
    Name of the recipe to show. If empty show all recipes.
+
+Options for verify
+==================
+The verify subcommand checks files with the checks that the DRP of their
+instrument registers in :data:`numina.core.config.check`, the same used by
+``numina run --validate``. It is useful to discard raw images with
+incomplete headers before reducing them.
+
+It is called like this::
+
+     $ numina [global-options] verify [options] files
+
+Each file is reported in one line, as ``OK``, ``INVALID`` (with the reason)
+or ``NOT CHECKED`` (the instrument has no checks, the image has no
+``INSTRUME``, or the file is not a FITS or JSON file), followed by a summary::
+
+    $ numina verify r0001.fits r0002.fits
+    OK r0001.fits
+    INVALID r0002.fits: HDU 0: 'VPH' is a required property
+    1 valid, 1 invalid, 0 not checked
+
+The exit status is 1 if some file is invalid, and 0 otherwise.
+
+.. program:: numina verify
+
+.. option:: --mode MODE
+
+   Check the images as the raw images of the observing mode MODE (or
+   INSTRUMENT.MODE, if several DRPs have a mode with that name), instead
+   of the type deduced from their headers.
+
+.. option:: --ob
+
+   The files are observation results. Each raw image is checked as the raw
+   image of the observing mode, and then the observation result with the
+   validator of the mode, as with ``numina run --validate``. Not allowed
+   with :option:`--mode`.
+
+.. option:: --datadir path
+
+   Directory of the raw images of the observation results. By default,
+   the value of datadir in ``[tool.run]`` of the configuration.
+
+.. option:: files
+
+   The files to check: FITS images and JSON files or, with :option:`--ob`,
+   observation results.

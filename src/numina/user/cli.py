@@ -116,7 +116,7 @@ def main(args=None):
     )
 
     # Init subcommands
-    cmds = ["clidentify", "clishowins", "clishowom", "clishowrecip", "clirun", "clirunrec"]
+    cmds = ["clidentify", "clishowins", "clishowom", "clishowrecip", "clirun", "clirunrec", "cliverify"]
     for cmd in cmds:
         cmd_mod = import_module(f".{cmd}", "numina.user")
         register = getattr(cmd_mod, "register", None)
@@ -167,7 +167,8 @@ def main(args=None):
 
     if command is not None:
         try:
-            args.command(args, extra_args, config)
+            # the value of the subcommand is the exit status
+            return args.command(args, extra_args, config)
         except ValidationError as error:
             # Invalid inputs are an error of the user, not of the program
             if args.debug:
