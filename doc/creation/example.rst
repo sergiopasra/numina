@@ -216,7 +216,7 @@ The recipe will receive the result of the observation and return a master bias i
    the result of the observation.
 3. This recipe only produces one result. Each product is an object of
    :class:`~numina.core.dataholders.Result` class. The type of the product is given by
-   :class:`~numina.core.products.DataFrameType`, representing an image.
+   :class:`~numina.types.frame.DataFrameType`, representing an image.
 4. Each recipe must provide a `run` method. The method has only one argument that collects
    the values of all inputs declared by the recipe. In this case, `rinput` has a member
    named `obresult` and can be accessed through `rinput.obresult` which belongs to :class:`~numina.core.oresult.ObservationResult` class.
@@ -255,9 +255,9 @@ observation result and a master bias image (flat-field images require bias subtr
    :class:`~numina.core.requirements.Requirement` class or any subclass of it. The
    type of the requirement is :class:`~numina.types.obsresult.ObservationResultType`, representing
    the result of the observation.
-2. It also requires a master bias image which belongs to :class:`~numina.core.products.DataFrameType` class (represents an image).
+2. It also requires a master bias image which belongs to :class:`~numina.types.frame.DataFrameType` class (represents an image).
 3. In this case, `rinput` has two members: 1) `rinput.obresult` of :class:`~numina.core.oresult.ObservationResult` class and
-   2) a `rinput.master_bias` of :class:`~numina.core.dataframe.DataFrame` class
+   2) a `rinput.master_bias` of :class:`~numina.types.dataframe.DataFrame` class
 4. The arguments of `create_result` must be the same names used in the product definition.
 
 Finally, the recipe for `Image` mode reduction (inside `image.py`) has three requirements, the
@@ -289,8 +289,8 @@ observation result, a master bias and a master flat images
 
 1. In this case, `rinput` will have three members
    `rinput.obresult` of :class:`~numina.types.obsresult.ObservationResult` class,
-   `rinput.master_bias` of :class:`~numina.core.dataframe.DataFrame` class and
-   `rinput.master_flat` of :class:`~numina.core.dataframe.DataFrame` class.
+   `rinput.master_bias` of :class:`~numina.types.dataframe.DataFrame` class and
+   `rinput.master_flat` of :class:`~numina.types.dataframe.DataFrame` class.
 
 .. note::
 

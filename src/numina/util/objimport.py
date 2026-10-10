@@ -10,7 +10,6 @@
 """Import objects by name"""
 
 import importlib
-import warnings
 
 
 def import_object(path):
@@ -33,11 +32,3 @@ def import_object(path):
     # Try to import the last part
     rr = importlib.import_module(path)
     return rr
-
-
-def fully_qualified_name(obj, sep="."):
-
-    warnings.warn("use numina.util.fqn.fully_qualified_name instead", DeprecationWarning, stacklevel=2)
-    import numina.util.fqn as fqn
-
-    return fqn.fully_qualified_name(obj, sep)

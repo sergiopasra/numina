@@ -9,7 +9,6 @@
 
 import datetime
 import logging
-import warnings
 
 from astropy.io import fits
 
@@ -66,11 +65,7 @@ class Corrector(node.Node):
             # FIXME: this is a GCS problem
             _logger.debug("change dtype to float32, old is %s", img[0].data.dtype)
             img = promote_hdulist(img)
-        if hasattr(self, "run"):
-            img = self.run(img)
-        else:
-            warnings.warn("use method 'run' instead of '_run'", DeprecationWarning, stacklevel=2)
-            img = self.run(img)
+        img = self.run(img)
 
         return img
 

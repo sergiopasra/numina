@@ -17,7 +17,6 @@ Numina modules
    logger
    modeling
    processing
-   qa
    schemas
    store
    treedict

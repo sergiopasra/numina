@@ -1,18 +1,6 @@
 import pytest
 
 
-def test_warns_qc():
-
-    with pytest.warns(DeprecationWarning):
-        import numina.core.qc  # noqa: F401
-
-
-def test_warns_products():
-
-    with pytest.warns(DeprecationWarning):
-        import numina.core.products  # noqa: F401
-
-
 def test_warns_query_constraints():
     import numina.types.datatype as dt
     from numina.core.dataholders import Requirement
@@ -110,3 +98,16 @@ def test_lines_catalog_data_product_type():
     from numina.types import linescatalog, product
 
     assert linescatalog.DataProductType is product.DataProductType
+
+
+@pytest.mark.parametrize("name", ["tags_as_scalar", "tags_as_list"])
+def test_warns_tags_as(name):
+    import numina.core.dataholders as dh
+    from numina.core.oresult import ObservationResult
+
+    obsres = ObservationResult()
+    obsres.tags = {"filter": "J"}
+    with pytest.warns(DeprecationWarning, match=name):
+        with getattr(dh, name)(obsres):
+            pass
+    assert obsres.tags == {"filter": "J"}

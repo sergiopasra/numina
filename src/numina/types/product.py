@@ -97,20 +97,6 @@ class DataProductMixin(DataTypeBase):
         super().__setstate__(state)
 
 
-class DataProductTag(DataProductMixin):
-    """A type that is a data product.
-
-    .. deprecated:: 0.16
-            `DataProductTag` is replaced by `DataProductMixin`. It will
-            be removed in 1.0
-
-    """
-
-    def __init__(self, *args, **kwargs):
-        warnings.warn("The 'DataProductTag' class was renamed to 'DataProductMixin'", DeprecationWarning)
-        super().__init__(*args, **kwargs)
-
-
 class DataProductType(DataProductMixin, DataType):
     def __init__(self, ptype, default=None):
         super().__init__(ptype, default=default)

@@ -179,6 +179,12 @@ def _with_tags(obsres, tags):
 
 @contextlib.contextmanager
 def tags_as_scalar(obsres):
+    """Deprecated, it is not used by numina and will be removed"""
+    warnings.warn(
+        "tags_as_scalar is deprecated, it is not used by numina and will be removed",
+        DeprecationWarning,
+        stacklevel=3,
+    )
     saved = obsres.tags
     if isinstance(obsres.tags, list):
         obsres.tags = obsres.tags[0]
@@ -190,6 +196,12 @@ def tags_as_scalar(obsres):
 
 @contextlib.contextmanager
 def tags_as_list(obsres):
+    """Deprecated, it is not used by numina and will be removed"""
+    warnings.warn(
+        "tags_as_list is deprecated, it is not used by numina and will be removed",
+        DeprecationWarning,
+        stacklevel=3,
+    )
     saved = obsres.tags
     if not isinstance(obsres.tags, list):
         obsres.tags = [obsres.tags]
