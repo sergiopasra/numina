@@ -7,7 +7,6 @@
 # License-Filename: LICENSE.txt
 #
 
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import numpy as np
 from numpy.polynomial import Polynomial
 from scipy.interpolate import interp1d
@@ -392,6 +391,8 @@ def periodic_corr1d(
             cwindow = f"(peak region: [{-naround_zero},{naround_zero}] pixels)"
             ax.text(0.01, 0.93, cwindow, horizontalalignment="left", verticalalignment="top", transform=ax.transAxes)
         # inset plot
+        from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+
         inset_ax = inset_axes(ax, width="40%", height="40%", loc=1)
         inset_ax.plot(xcorr, corr)
         if naround_zero is not None:

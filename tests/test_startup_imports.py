@@ -13,6 +13,13 @@ def test_cli_does_not_import(module):
     assert result.stdout.strip() == "False"
 
 
+@pytest.mark.parametrize("module", ["numina.array.wavecalib.arccalibration", "numina.array.wavecalib.crosscorrelation"])
+def test_wavecalib_does_not_import_matplotlib(module):
+    code = f"import sys, {module}; print('matplotlib' in sys.modules)"
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
+    assert result.stdout.strip() == "False"
+
+
 def test_matplotlib_qt_plt():
     import matplotlib.pyplot
 
