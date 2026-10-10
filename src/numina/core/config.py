@@ -19,6 +19,7 @@ functions, with a lower priority value to be used before these ones.
 
 import numina.core.dataload
 
+#: Functions that load a file, by media type
 load = numina.core.dataload.DataLoaders()
 
 
@@ -54,9 +55,11 @@ def load_json(pathname):  # noqa: F811
     return obj
 
 
+#: Functions that describe a file, by media type
 describe = numina.core.dataload.DataLoaders()
 
 
+#: Functions that check an object, by instrument
 check = numina.core.dataload.DataChecker()
 
 

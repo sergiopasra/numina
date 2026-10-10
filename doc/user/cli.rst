@@ -95,7 +95,22 @@ It is called like this::
 
 .. option:: --validate
 
-   validate inputs and results of recipes
+   Validate the inputs and the results of the recipe. Without this
+   option, the value of validate in ``[tool.run]`` of the configuration
+   is used, by default the inputs and results are not validated.
+
+   Each input is validated with its type. For the observation result,
+   each raw image is checked with the function that the DRP of the
+   instrument registers in :data:`numina.core.config.check` (the same
+   used by ``numina verify``), as the raw image type of the observing
+   mode (``rawimage`` in ``drp.yaml``), and then the observation result
+   is checked with the validator of the mode (``validator`` in
+   ``drp.yaml``). If the DRP does not register a function, the raw
+   images are not checked.
+
+   If an input is not valid, the reduction stops before running the
+   recipe, with an error that lists the invalid inputs. The results
+   are validated after the recipe runs.
 
 .. option:: observing_result filename
 

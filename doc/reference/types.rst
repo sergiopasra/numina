@@ -90,6 +90,10 @@ data model or a validation of its products.
    :synopsis: TBD
    :members:
 
+.. automodule:: numina.types.obsresult
+   :synopsis: Observation result
+   :members:
+
 .. automodule:: numina.types.product
    :synopsis: Data products
    :members:

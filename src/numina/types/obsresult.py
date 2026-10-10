@@ -6,6 +6,7 @@
 # License-Filename: LICENSE.txt
 #
 
+"""The type of the observation result, and the validation of its raw images"""
 
 from numina.core.oresult import ObservationResult
 
