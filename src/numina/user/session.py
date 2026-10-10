@@ -94,10 +94,15 @@ class Session:
 
         The keyword arguments are those of :func:`numina.user.baserun.run_reduce`
         (as_mode, pipeline, profile, requirements, copy_files, validate_inputs,
-        validate_results, strict_inputs). The default of copy_files is the value
-        in the configuration.
+        validate_results, strict_inputs). The defaults of copy_files, and of
+        validate_inputs and validate_results, are the values of copy_files and
+        validate in ``[tool.run]`` of the configuration, as in ``numina run``.
         """
-        kwargs.setdefault("copy_files", self.config["tool.run"].getboolean("copy_files"))
+        section = self.config["tool.run"]
+        kwargs.setdefault("copy_files", section.getboolean("copy_files"))
+        validate = section.getboolean("validate")
+        kwargs.setdefault("validate_inputs", validate)
+        kwargs.setdefault("validate_results", validate)
         return run_reduce(self.datamanager, obsid, **kwargs)
 
     def _require_registry(self):

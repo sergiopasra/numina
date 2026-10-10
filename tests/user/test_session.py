@@ -109,3 +109,25 @@ def test_copy_files_from_config(basedir):
     session.run(1)
     installed = basedir / "obsid1_work" / "image1.fits"
     assert installed.is_file() and not installed.is_symlink()
+
+
+@pytest.mark.parametrize("validate", [False, True])
+def test_validate_from_config(basedir, validate):
+    config = base_config()
+    config["tool.run"]["validate"] = str(validate)
+    session = Session(basedir=basedir, config=config)
+    session.add_observations("bias.yaml")
+    task = session.run(1)
+    assert task.state == 2
+    assert task.request_params["validate_inputs"] is validate
+    assert task.request_params["validate_results"] is validate
+
+
+def test_validate_argument_over_config(basedir):
+    config = base_config()
+    config["tool.run"]["validate"] = "True"
+    session = Session(basedir=basedir, config=config)
+    session.add_observations("bias.yaml")
+    task = session.run(1, validate_inputs=False)
+    assert task.request_params["validate_inputs"] is False
+    assert task.request_params["validate_results"] is True
