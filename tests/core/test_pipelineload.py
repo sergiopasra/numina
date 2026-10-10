@@ -65,3 +65,52 @@ def test_mode_defined_several_times():
     with pytest.warns(RuntimeWarning, match="the mode 'dark' is defined several times"):
         drp = drp_load_data("numina", data)
     assert drp.modes["dark"].name == "Dark 2"
+
+
+def test_modes_have_instrument():
+    """The observing modes know the name of their instrument"""
+    drp = drp_load_data("numina", DRP_TEST1_MODES)
+
+    assert drp.modes
+    for mode in drp.modes.values():
+        assert mode.instrument == "TEST1"
+    assert repr(drp.modes["bias"]) == "ObservingMode(name=Bias, instrument=TEST1)"
+
+
+def test_load_mode_without_instrument():
+    node = {"key": "bias", "name": "Bias", "summary": "", "description": ""}
+    assert load_mode(node).instrument == ""
+    assert load_mode(node, instrument="TEST1").instrument == "TEST1"
+
+
+def test_load_modes_dict():
+    node = {"bias": {"key": "bias", "name": "Bias", "summary": "", "description": ""}}
+    from numina.core.pipelineload import load_modes
+
+    modes = load_modes(node, instrument="TEST1")
+    assert modes["bias"].key == "bias"
+    assert modes["bias"].instrument == "TEST1"
+
+
+def test_observing_mode_validate_deprecated():
+    from numina.core.pipeline import ObservingMode
+
+    with pytest.warns(DeprecationWarning, match="ObservingMode.validate"):
+        assert ObservingMode().validate(None)
+
+
+DRP_TEST1_MODES = """
+name: TEST1
+configurations:
+  path: numina.testing.drps.configs
+modes:
+  - key: bias
+    name: Bias
+    summary: Bias mode
+    description: Bias mode
+pipelines:
+  default:
+    version: 1
+    recipes:
+      bias: numina.core.utils.AlwaysSuccessRecipe
+"""

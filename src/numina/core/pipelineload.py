@@ -98,22 +98,22 @@ def check_recipe_modes(name, pipelines, modes):
                 warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
 
-def load_modes(node, confclass=None):
-    """Load all observing modes"""
+def load_modes(node, confclass=None, instrument=""):
+    """Load all observing modes of `instrument`"""
     if isinstance(node, list):
-        values = [load_mode(child, confclass) for child in node]
+        values = [load_mode(child, confclass, instrument=instrument) for child in node]
         keys = [mode.key for mode in values]
         return dict(zip(keys, values))
     elif isinstance(node, dict):
-        values = {key: load_mode(child) for key, child in node}
+        values = {key: load_mode(child, confclass, instrument=instrument) for key, child in node.items()}
         return values
     else:
         raise NotImplementedError
 
 
-def load_mode(node, confclass=None):
-    """Load one observing mdode"""
-    obs_mode = ObservingMode()
+def load_mode(node, confclass=None, instrument=""):
+    """Load one observing mode of `instrument`"""
+    obs_mode = ObservingMode(instrument=instrument)
     if confclass is not None:
         node = confclass.mode_loader(node)
     obs_mode.__dict__.update(node)
@@ -298,7 +298,7 @@ def load_instrument(package, node, confclass=None, default_requirements=None):
         trans["version"] = node["version"]
     trans["pipelines"] = load_pipelines(node["name"], pipe_node)
     check_mode_keys(node["name"], mode_node)
-    trans["modes"] = load_modes(mode_node, confclass)
+    trans["modes"] = load_modes(mode_node, confclass, instrument=node["name"])
     check_recipe_modes(node["name"], trans["pipelines"], trans["modes"])
     confs, modpath = load_confs(package, conf_node)
     # trans['configurations'] = confs
