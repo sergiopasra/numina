@@ -9,8 +9,8 @@
 
 """User command line interface of Numina, verify functionality.
 
-``numina verify`` checks files with the functions that the DRPs register
-in :data:`numina.core.config.check`, the same used to validate the inputs
+``numina verify`` checks files with the checkers of the DRPs, through
+:data:`numina.core.config.check`, the same used to validate the inputs
 of ``numina run --validate``. It can check:
 
 * FITS images and JSON files, with the type deduced by the DRP of their
@@ -72,7 +72,6 @@ def verify(args, extra_args, config):
     """Verify the files of the command line, print a line for each one"""
     import numina.drps
 
-    # The DRPs register their checks when they are loaded
     drps = numina.drps.get_system_drps()
 
     if args.ob:

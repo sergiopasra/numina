@@ -163,6 +163,15 @@ class InstrumentDRP:
        modes : dict of ObservingModes
        pipelines : dict of Pipeline
 
+    Attributes
+    ==========
+       checker : callable or None
+           The function that checks the objects of the instrument, called
+           as ``checker(obj, astype=None, level=None)``. It returns True or
+           raises an exception if the object is not valid. The DRP sets it
+           in the function of its entry point, and it is used by
+           :data:`numina.core.config.check`.
+
     """
 
     def __init__(
@@ -185,6 +194,7 @@ class InstrumentDRP:
         else:
             self.datamodel = numina.datamodel.DataModel()
         self.version = version
+        self.checker = None
         self._def_reqs = {} if default_requirements is None else default_requirements
         if isinstance(pipelines, dict):
             for pipeline in pipelines.values():

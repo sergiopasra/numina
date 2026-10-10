@@ -11,10 +11,11 @@
 
 ``load`` and ``describe`` are :class:`~numina.core.dataload.DataLoaders`:
 called with the path of a file, they return its contents and a
-description (instrument and observing mode). ``check`` is a
-:class:`~numina.core.dataload.DataChecker` that checks an object with
-the function of its instrument. The DRPs can register their own
-functions, with a lower priority value to be used before these ones.
+description (instrument and observing mode). The DRPs can register their
+own functions, with a lower priority value to be used before these ones.
+``check`` is a :class:`~numina.core.dataload.DataChecker` that checks an
+object with the function of its instrument, the attribute ``checker`` of
+its DRP.
 """
 
 import numina.core.dataload
@@ -59,7 +60,7 @@ def load_json(pathname):  # noqa: F811
 describe = numina.core.dataload.DataLoaders()
 
 
-#: Functions that check an object, by instrument
+#: Check an object with the checker of the DRP of its instrument
 check = numina.core.dataload.DataChecker()
 
 

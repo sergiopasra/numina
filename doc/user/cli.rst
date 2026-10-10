@@ -100,13 +100,13 @@ It is called like this::
    is used, by default the inputs and results are not validated.
 
    Each input is validated with its type. For the observation result,
-   each raw image is checked with the function that the DRP of the
-   instrument registers in :data:`numina.core.config.check` (the same
+   each raw image is checked with the checker of the DRP of the
+   instrument, through :data:`numina.core.config.check` (the same
    used by ``numina verify``), as the raw image type of the observing
    mode (``rawimage`` in ``drp.yaml``), and then the observation result
    is checked with the validator of the mode (``validator`` in
-   ``drp.yaml``). If the DRP does not register a function, the raw
-   images are not checked.
+   ``drp.yaml``). If the DRP has no checker, the raw images are not
+   checked.
 
    If an input is not valid, the reduction stops before running the
    recipe, with an error that lists the invalid inputs. The results
@@ -180,8 +180,8 @@ It is called like this::
 
 Options for verify
 ==================
-The verify subcommand checks files with the checks that the DRP of their
-instrument registers in :data:`numina.core.config.check`, the same used by
+The verify subcommand checks files with the checker of the DRP of their
+instrument, through :data:`numina.core.config.check`, the same used by
 ``numina run --validate``. It is useful to discard raw images with
 incomplete headers before reducing them.
 

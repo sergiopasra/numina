@@ -4,7 +4,7 @@ import astropy.io.fits as fits
 import pytest
 import yaml
 
-import numina.core.config as cfg
+import numina.core.pipelineload as pload
 from numina.exceptions import ValidationError
 from numina.user.cli import main
 
@@ -59,8 +59,12 @@ def check_test1(obj, astype=None, level=None):
 
 @pytest.fixture
 def datadir(drpmocker, monkeypatch, tmp_path):
-    drpmocker.add_drp("TEST1", DRP_TEST1)
-    monkeypatch.setitem(cfg.check._loaders, "TEST1", check_test1)
+    def load_drp():
+        drp = pload.drp_load_data("numina", DRP_TEST1)
+        drp.checker = check_test1
+        return drp
+
+    drpmocker.add_drp("TEST1", load_drp)
     monkeypatch.chdir(tmp_path)
     data = tmp_path / "data"
     data.mkdir()

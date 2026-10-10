@@ -109,21 +109,46 @@ class DataLoaders:
 
 
 class DataChecker:
-    """Registry of functions that check objects, selected by instrument.
+    """Functions that check objects, selected by instrument.
 
-    A function is registered with :meth:`register` for the name of an
-    instrument, and called as ``func(obj, astype=None, level=None)``.
+    The function of an instrument is the attribute ``checker`` of its DRP
+    (:class:`~numina.core.pipeline.InstrumentDRP`), and it is called as
+    ``func(obj, astype=None, level=None)``. The DRPs are loaded if needed.
+
+    Functions registered with :meth:`register` are used for the instruments
+    whose DRP has no checker.
     """
 
     def __init__(self):
         self._loaders = {}
 
+    def _function(self, instrument_name):
+        """The function of `instrument_name`, or None"""
+        import numina.drps
+
+        try:
+            drp = numina.drps.get_system_drps().query_by_name(instrument_name)
+        except KeyError:
+            drp = None
+        func = getattr(drp, "checker", None)
+        if func is None:
+            func = self._loaders.get(instrument_name)
+        return func
+
     def __contains__(self, instrument_name):
-        """True if a function is registered for `instrument_name`"""
-        return instrument_name in self._loaders
+        """True if there is a function for `instrument_name`"""
+        return self._function(instrument_name) is not None
 
     def register(self, instrument_name):
-        """Decorator that registers the function of `instrument_name`"""
+        """Decorator that registers the function of `instrument_name`.
+
+        Deprecated, set the attribute ``checker`` of the DRP instead.
+        """
+        warnings.warn(
+            "DataChecker.register is deprecated, set the attribute checker of the InstrumentDRP",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         def wrapper(func):
             self._loaders[instrument_name] = func
@@ -137,10 +162,8 @@ class DataChecker:
         If there is no function for the instrument, a warning is emitted
         and None is returned.
         """
-        try:
-            func = self._loaders[instrument]
-        except KeyError:
-            # No function registered
+        func = self._function(instrument)
+        if func is None:
             warnings.warn(f"no function for {instrument}")
             return
         return func(hdulist, astype=astype, level=level)

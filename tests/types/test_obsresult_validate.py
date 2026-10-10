@@ -4,6 +4,7 @@ import astropy.io.fits as fits
 import pytest
 
 import numina.core.config as cfg
+import numina.core.pipelineload as pload
 import numina.types.obsresult as obstype
 from numina.core import ObservationResult
 from numina.core.pipeline import ObservingMode
@@ -29,8 +30,25 @@ def mode(monkeypatch):
     return mode
 
 
+DRP_TESTVAL = """
+name: TESTVAL
+configurations:
+  path: numina.testing.drps.configs
+modes:
+  - key: mode1
+    name: Mode1
+    summary: Mode1
+    description: Mode1
+pipelines:
+  default:
+    version: 1
+    recipes:
+      mode1: numina.core.utils.AlwaysSuccessRecipe
+"""
+
+
 @pytest.fixture
-def checker(monkeypatch):
+def checker(drpmocker):
     calls = []
 
     def check(hdulist, astype=None, level=None):
@@ -39,7 +57,12 @@ def checker(monkeypatch):
             raise ValueError("VALUE must be positive")
         return True
 
-    monkeypatch.setitem(cfg.check._loaders, "TESTVAL", check)
+    def load_drp():
+        drp = pload.drp_load_data("numina", DRP_TESTVAL)
+        drp.checker = check
+        return drp
+
+    drpmocker.add_drp("TESTVAL", load_drp)
     return calls
 
 
@@ -62,7 +85,7 @@ def test_mode_validator(mode, checker):
         obstype.ObservationResultType().validate(create_obsres([1]))
 
 
-def test_raw_frames_without_checker(mode):
+def test_raw_frames_without_checker(mode, drpmocker):
     """Without a checker for the instrument, the images are not checked"""
     assert "TESTVAL" not in cfg.check
     assert obstype.ObservationResultType().validate(create_obsres([-1])) is True

@@ -28,11 +28,11 @@ def _obtain_mode(instrument, mode_key):
 def validate_raw_frames(obj, mode):
     """Check each frame of the observation result as a raw image of the mode.
 
-    The images are checked with the function that the DRP of the instrument
-    registers in :data:`numina.core.config.check`, as ``numina verify``
-    does, with ``astype`` the raw image type of the mode (``rawimage`` in
-    drp.yaml). If the DRP registers no function, or the mode has no raw
-    image type, the images are not checked.
+    The images are checked with the checker of the DRP of the instrument,
+    through :data:`numina.core.config.check`, as ``numina verify`` does,
+    with ``astype`` the raw image type of the mode (``rawimage`` in
+    drp.yaml). If the DRP has no checker, or the mode has no raw image
+    type, the images are not checked.
 
     Returns
     -------
