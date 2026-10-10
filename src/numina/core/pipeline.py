@@ -155,22 +155,48 @@ class Pipeline:
 class InstrumentDRP:
     """Description of an Instrument Data Reduction Pipeline
 
+    The DRPs are usually created from their ``drp.yaml`` with
+    :func:`numina.core.pipelineload.drp_load`, in the function of their
+    entry point in the group ``numina.pipeline.1``.
+
     Parameters
-    ==========
-       name : str
-           Name of the instrument
-       configurations : dict of InstrumentConfiguration
-       modes : dict of ObservingModes
-       pipelines : dict of Pipeline
+    ----------
+    name : str
+        Name of the instrument.
+    configurations : dict
+        The instrument configurations (profiles), the contents of their
+        JSON files by file name.
+    modes : dict of ObservingMode
+        The observing modes, by key.
+    pipelines : dict of Pipeline
+        The pipelines, by name. Each pipeline maps the observing modes to
+        their recipes.
+    products : optional
+        Not used.
+    datamodel : type, optional
+        The class of the data model of the instrument, a subclass of
+        :class:`numina.datamodel.DataModel`. The DRP holds an instance.
+        By default, the base class.
+    version : str, optional
+        Version of the DRP.
+    default_requirements : dict, optional
+        Default values of the requirements, by profile, pipeline and mode,
+        see :meth:`default_requirements`.
 
     Attributes
-    ==========
-       checker : callable or None
-           The function that checks the objects of the instrument, called
-           as ``checker(obj, astype=None, level=None)``. It returns True or
-           raises an exception if the object is not valid. The DRP sets it
-           in the function of its entry point, and it is used by
-           :data:`numina.core.config.check`.
+    ----------
+    checker : callable or None
+        The function that checks the objects of the instrument, called
+        as ``checker(obj, astype=None, level=None)``. It returns True or
+        raises an exception if the object is not valid. The DRP sets it
+        in the function of its entry point, and it is used by
+        :data:`numina.core.config.check`.
+    package : str
+        The package of the DRP, set by
+        :func:`~numina.core.pipelineload.drp_load`.
+    profiles : str
+        The module with the instrument configurations, set by
+        :func:`~numina.core.pipelineload.drp_load`.
 
     """
 
@@ -236,6 +262,7 @@ class InstrumentDRP:
                 warnings.warn(f"Mode {mode_key} has not recipe")
 
     def product_label(self, tipo):
+        """The label of the product type `tipo`, its name"""
         return tipo.name()
 
     def select_profile(self, obresult):
