@@ -68,20 +68,34 @@ class DataFrameType(DataType):
             raise TypeError(msg)
 
     def validate(self, value):
-        """validate"""
-        # value must be None or convertible to HDUList
-        # obj can be None or a DataFrame
+        """Validate a frame, opening it if needed.
+
+        `value` can be None, an HDUList or a DataFrame. The contents
+        are validated with :meth:`validate_hdulist`.
+
+        Raises
+        ------
+        numina.exceptions.ValidationError
+            If the frame is not valid.
+        """
         if value is None:
             return True
+        if isinstance(value, fits.HDUList):
+            self.validate_hdulist(value)
+        elif getattr(value, "frame", None) is not None:
+            # the HDUList is in memory, it must not be closed
+            self.validate_hdulist(value.frame)
         else:
-            if isinstance(value, fits.HDUList):
-                hdulist = value
-            else:
-                hdulist = value.open()
-
-            self.validate_hdulist(hdulist)
+            with value.open() as hdulist:
+                self.validate_hdulist(hdulist)
+        return True
 
     def validate_hdulist(self, hdulist):
+        """Validate the contents of the frame, nothing by default.
+
+        The types of the DRPs override this method to check the
+        headers and data of their frames.
+        """
         pass
 
     def _datatype_dump(self, obj, where):

@@ -88,6 +88,16 @@ class EntryHolder:
         return self.type.convert(val)
 
     def validate(self, val):
+        """Validate `val` with the type of the entry.
+
+        If the entry was created with ``validation=False``, the value
+        is not validated.
+
+        Raises
+        ------
+        numina.exceptions.ValidationError
+            If the value is not valid.
+        """
         if self.validation:
             return self.type.validate(val)
         return True
@@ -566,7 +576,16 @@ class Parameter(Requirement):
         return post
 
     def validate(self, val):
-        """Validate values according to the requirement"""
+        """Validate `val` with the type and the custom validator of the requirement.
+
+        If the requirement was created with ``validation=False``, the value
+        is not validated.
+
+        Raises
+        ------
+        numina.exceptions.ValidationError
+            If the value is not valid.
+        """
         if self.validation:
             self.type.validate(val)
 

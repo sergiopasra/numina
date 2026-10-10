@@ -119,6 +119,7 @@ class DataChecker:
         self._loaders = {}
 
     def __contains__(self, instrument_name):
+        """True if a function is registered for `instrument_name`"""
         return instrument_name in self._loaders
 
     def register(self, instrument_name):
@@ -145,4 +146,5 @@ class DataChecker:
         return func(hdulist, astype=astype, level=level)
 
     def __call__(self, instrument, hdulist, astype=None, level=None):
+        """Check `hdulist` with the function of `instrument`, see :meth:`dispatch`"""
         return self.dispatch(instrument, hdulist, astype=astype, level=level)
