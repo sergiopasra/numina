@@ -28,6 +28,7 @@ from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
+from numina.array.display.logging_from_debugplot import logging_from_debugplot
 
 _logger = logging.getLogger(__name__)
 
@@ -250,8 +251,9 @@ def check_wlcalib_sp(
             raise ValueError("ERROR: interactive use of this function is not " "possible when pdf is not None")
 
     # display list of expected arc lines
+    # the extra detail of debugplot 21 and 22, logging has no level below DEBUG
     if abs(debugplot) in (21, 22):
-        print("wv_master:", wv_master)
+        _logger.debug("wv_master: %s", wv_master)
 
     # determine spectrum length
     naxis1 = sp.shape[0]
@@ -324,19 +326,17 @@ def check_wlcalib_sp(
         set2 = set(list_wv_found)
         missing_wv = list(set1.symmetric_difference(set2))
         missing_wv.sort()
-        if abs(debugplot) >= 10:
-            print("-" * 79)
-            print(">>> Number of arc lines in master file:", len(wv_master))
+        _logger.debug("-" * 79)
+        _logger.debug(">>> Number of arc lines in master file: %d", len(wv_master))
         if abs(debugplot) in [21, 22]:
-            print(">>> Unmatched lines...................:", missing_wv)
-        elif abs(debugplot) >= 10:
-            print(">>> Number of unmatched lines.........:", len(missing_wv))
-        if abs(debugplot) >= 10:
-            print(">>> Number of line peaks found........:", npeaks)
-            print(">>> Number of identified lines........:", nlines_ok)
-            print(">>> Number of unmatched lines.........:", len(missing_wv))
-            print(">>> Polynomial degree in residuals fit:", poldeg_effective)
-            print(">>> Polynomial fit to residuals.......:\n", polyres)
+            _logger.debug(">>> Unmatched lines...................: %s", missing_wv)
+        else:
+            _logger.debug(">>> Number of unmatched lines.........: %d", len(missing_wv))
+        _logger.debug(">>> Number of line peaks found........: %d", npeaks)
+        _logger.debug(">>> Number of identified lines........: %d", nlines_ok)
+        _logger.debug(">>> Number of unmatched lines.........: %d", len(missing_wv))
+        _logger.debug(">>> Polynomial degree in residuals fit: %d", poldeg_effective)
+        _logger.debug(">>> Polynomial fit to residuals.......:\n %s", polyres)
 
         # display results
         if (abs(debugplot) % 10 != 0) or (pdf is not None):
@@ -576,8 +576,7 @@ def check_wlcalib_sp(
         npoints_total = len(xresid)
         npoints_removed = sum(reject)
         npoints_used = npoints_total - npoints_removed
-        if abs(debugplot) >= 10:
-            print(">>> Npoints (total / used / removed)..:", npoints_total, npoints_used, npoints_removed)
+        _logger.debug(">>> Npoints (total / used / removed)..: %d %d %d", npoints_total, npoints_used, npoints_removed)
         if npoints_used < min_nlines_to_refine:
             _logger.warning("number of lines insufficient to refine the wavelength calibration")
             copc = "n"
@@ -724,6 +723,9 @@ def main(args=None):
     )
 
     args = parser.parse_args(args=args)
+
+    # the messages of debugplot >= 10, logged with DEBUG, shown as before
+    logging_from_debugplot(args.debugplot, fmt="%(message)s")
 
     # scan range
     tmp_str = args.scans.split(",")
